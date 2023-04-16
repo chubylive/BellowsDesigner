@@ -38,14 +38,15 @@ def pointToStr(point):
 	return (str(sx1) + "mm", str(sy1) + "mm")
 
 def pointAngleLine(point,angle,length_mm):
+	print("draw Slope: ", angle * 180/math.pi)
 	(x1,y1) = point
 	return(point,(x1 + length_mm * math.cos(angle), y1 + length_mm * math.sin(angle)))
 
-def drawLine(line, dwgIn):
+def drawLine(line, dwgIn, r = 10, g = 10 , b = 16):
 	((sx1,sy1),(ex1,ey1))  =  line
 	strLine = ((str(sx1) + "mm", str(sy1) + "mm"),(str(ex1) + "mm", str(ey1) + "mm") )
 	(pointA,pointB) = strLine
-	dwgIn.add(dwg.line(pointA,pointB, stroke=svgwrite.rgb(10, 10, 16, '%')))
+	dwgIn.add(dwg.line(pointA,pointB, stroke=svgwrite.rgb(r, g, b, '%')))
 
 def drawStrLine(line, dwgIn):
 	(pointA,pointB) = line
@@ -104,15 +105,19 @@ def lineStrToDouble(line):
 	(((strSx),(strSy)),((strEx),(strEy))) = line
 	return ((float(strSx.replace("mm","")),float(strSy.replace("mm",""))),(float(strEx.replace("mm","")),float(strEy.replace("mm",""))))
 
-def drawPleats(startLine, dwgIn, foldDistIn, numFoldsIn, rightLineInner, leftLineInner, slope):
+def drawPleats(startLine, dwgIn, foldDistIn, numFoldsIn, rightLineInner, leftLineInner, slope, sign):
 	(((strSx),(strSy)),((strLeftx),(strLefty))) = startLine
 	# dwgIn.add(dwg.line(((strSx),(strSy)),((strLeftx),(strLefty)), stroke=svgwrite.rgb(255, 10, 16, '%')))
 	((sx,sy),(ex,ey)) = ((float(strSx.replace("mm","")),float(strSy.replace("mm",""))),(float(strLeftx.replace("mm","")),float(strLefty.replace("mm",""))))
 	((right_x,right_y),(left_x,left_y)) = ((sx,sy),(ex,ey))
-	
-
-
-	for x in range((2*numFoldsIn) - 4):
+	leftPrevIntrLine = {}
+	leftPrevIntrLineOther = {}
+	rightPrevIntrLine = {}
+	rightPrevIntrLineOther = {}
+	leftPoint = {}
+	rightPoint = {}
+	isUpPleat = False
+	for x in range((2*numFoldsIn) -3):
 		intrLine = ((sx, sy - (foldDistIn*0.5)) ,(ex ,ey - (foldDistIn*0.5)))
 		((sx1,sy1),(ex1,ey1))  =  intrLine
 		strIntrLine = ((str(sx1) + "mm", str(sy1) + "mm"),(str(ex1) + "mm", str(ey1) + "mm") )
@@ -120,24 +125,55 @@ def drawPleats(startLine, dwgIn, foldDistIn, numFoldsIn, rightLineInner, leftLin
 		lftPoint = line_intersection(lineStrToDouble(leftLineInner),intrLine)
 		rgtPoint = line_intersection(lineStrToDouble(rightLineInner),intrLine)
 		(intrPA,intrPB) = (pointToStr(lftPoint), pointToStr(rgtPoint))
-		dwgIn.add(dwg.line(intrPA,intrPB, stroke=svgwrite.rgb(255, 10, 16, '%')))
 		
-		if(x % 2 == 0): #intersect even
+		
+		# if(x % 2 == 0 or x % 2 != 0): #intersect even
+		if(x % 2 == 0 ):
+				# dwgIn.add(dwg.line(intrPA,intrPB, stroke=svgwrite.rgb(255, 10, 16, '%')))
 			# line at angle to intrLine
 				#calc line at angle from bottom left
-				leftBtmPleatLine = pointAngleLine(((left_x),(left_y)), (-slope + math.pi/4), -10000)
-				leftTopPleatPoint = drawLineUptoLine(leftBtmPleatLine,intrLine, dwgIn)
-				leftTopPleatLine = pointAngleLine(leftTopPleatPoint, -(slope + math.pi/4), -10000)
-				drawLineUptoLine(leftTopPleatLine,lineStrToDouble(leftLineInner), dwgIn)
-			# drawLine(pointAngleLine(((left_x),(left_y)), (slope + math.pi/4), -10000), dwgIn)
-		# else:
+				if isUpPleat == False:
+					leftPleatLine = pointAngleLine(((left_x),(left_y)), (-slope + math.pi/4) * sign, 10000)
+					leftPleatLineOther = pointAngleLine(((left_x),(left_y)), -(slope + math.pi/4) * sign, -10000)
+					rightPleatLine = pointAngleLine(((right_x),(right_y)), -(-slope + math.pi/4) * sign, -10000)
+					rightPleatLineOther = pointAngleLine(((right_x),(right_y)), (slope + math.pi/4) * sign, -10000)
+
+					isUpPleat = True
+				else:
+					leftPleatLine = pointAngleLine(((left_x),(left_y)), -(slope + math.pi/4) * sign, 10000)
+					leftPleatLineOther = pointAngleLine(((left_x),(left_y)), (-slope + math.pi/4) * sign, -10000)
+					rightPleatLine = pointAngleLine(((right_x),(right_y)), (slope + math.pi/4) * sign, -10000)
+					rightPleatLineOther = pointAngleLine(((right_x),(right_y)), -(-slope + math.pi/4) * sign, -10000)
+					isUpPleat = False
+				
+				if(leftPrevIntrLine != {} ):
+					if isUpPleat == False:
+						drawLineUptoLine(leftPrevIntrLine,leftPleatLine, dwgIn)
+						leftPoint = drawLineUptoLine(leftPleatLine,leftPrevIntrLine, dwgIn)
+						drawLineUptoLine(rightPrevIntrLine,rightPleatLine, dwgIn)
+						rightPoint = drawLineUptoLine(rightPleatLine,rightPrevIntrLine, dwgIn)
+					if isUpPleat == True:
+						drawLineUptoLine(leftPrevIntrLineOther,leftPleatLineOther, dwgIn)
+						leftPoint = drawLineUptoLine(leftPleatLineOther,leftPrevIntrLineOther, dwgIn)
+						drawLineUptoLine(rightPrevIntrLineOther,rightPleatLineOther, dwgIn)
+						rightPoint = drawLineUptoLine(rightPleatLineOther,rightPrevIntrLineOther, dwgIn)
+					dwg.add(dwg.line(pointToStr(leftPoint),pointToStr(rightPoint), stroke=svgwrite.rgb(10, 100, 170, '%'))).dasharray([dash,dash])
+		else:
+			dwgIn.add(dwg.line(intrPA,intrPB, stroke=svgwrite.rgb(10, 100, 170, '%'))).dasharray([dash,dash])
+		
 		((sx,sy),(ex,ey)) = intrLine
 		(left_x),(left_y) = (lftPoint[0],lftPoint[1])
+		(right_x),(right_y) = (rgtPoint[0],rgtPoint[1])
+		print(leftPleatLine)
+		leftPrevIntrLine = leftPleatLine
+		leftPrevIntrLineOther = leftPleatLineOther
+		rightPrevIntrLine = rightPleatLine
+		rightPrevIntrLineOther = rightPleatLineOther
 
 
 cameraFocalDist = 120	#mm
 frontStdSize = 56		#mm
-rearStdSize = 70.5      #114 		#mm
+rearStdSize = 114     #114 	70.5	#mm
 foldDist = 14.6			#mm
 flexFactor = 1.56
 numFolds = math.ceil((cameraFocalDist * flexFactor)/foldDist)
@@ -168,9 +204,10 @@ frontStrRgt = (str((canvasWidth/2) + frontStdSize/2) + 'mm', str((canvasHeight/2
 frtDwnLft = (str((canvasWidth/2) - frontStdSize/2) + 'mm', str((canvasHeight/2) - (bellowsLength/2) + foldDist) + 'mm')
 frtDwnRgt = (str((canvasWidth/2) + frontStdSize/2) + 'mm', str((canvasHeight/2) - (bellowsLength/2) + foldDist) + 'mm')
 
-# dwg.add(dwg.line(frontStrRgt,frontStrLft, stroke=svgwrite.rgb(10, 10, 16, '%'))).dasharray([dash,dash])
-# dwg.add(dwg.line(frontStrRgt,frtDwnRgt, stroke=svgwrite.rgb(10, 10, 16, '%'))).dasharray([dash,dash])
-# dwg.add(dwg.line(frontStrLft,frtDwnLft, stroke=svgwrite.rgb(10, 10, 16, '%'))).dasharray([dash,dash])
+#top flap
+dwg.add(dwg.line(frontStrRgt,frontStrLft, stroke=svgwrite.rgb(10, 10, 16, '%'))).dasharray([dash,dash])
+dwg.add(dwg.line(frontStrRgt,frtDwnRgt, stroke=svgwrite.rgb(10, 10, 16, '%'))).dasharray([dash,dash])
+dwg.add(dwg.line(frontStrLft,frtDwnLft, stroke=svgwrite.rgb(10, 10, 16, '%'))).dasharray([dash,dash])
 dwg.add(dwg.line(frtDwnRgt,frtDwnLft, stroke=svgwrite.rgb(10, 10, 16, '%')))
 
 #Read standard flap pre
@@ -180,10 +217,10 @@ rearStrRgt = (str((canvasWidth/2) + rearStdSize/2) + 'mm', str((canvasHeight/2) 
 rDwnLft = (str((canvasWidth/2) - rearStdSize/2) + 'mm', str((canvasHeight/2) + (bellowsLength/2) - foldDist) + 'mm')
 rDwnRgt = (str((canvasWidth/2) + rearStdSize/2) + 'mm', str((canvasHeight/2) + (bellowsLength/2) - foldDist) + 'mm')
 
-
-# dwg.add(dwg.line(rearStrRgt,rearStrLft, stroke=svgwrite.rgb(10, 10, 16, '%'))).dasharray([dash,dash])
-# dwg.add(dwg.line(rearStrRgt,rDwnRgt, stroke=svgwrite.rgb(10, 10, 16, '%'))).dasharray([dash,dash])
-# dwg.add(dwg.line(rearStrLft,rDwnLft, stroke=svgwrite.rgb(10, 10, 16, '%'))).dasharray([dash,dash])
+#bottom flap
+dwg.add(dwg.line(rearStrRgt,rearStrLft, stroke=svgwrite.rgb(10, 10, 16, '%'))).dasharray([dash,dash])
+dwg.add(dwg.line(rearStrRgt,rDwnRgt, stroke=svgwrite.rgb(10, 10, 16, '%'))).dasharray([dash,dash])
+dwg.add(dwg.line(rearStrLft,rDwnLft, stroke=svgwrite.rgb(10, 10, 16, '%'))).dasharray([dash,dash])
 dwg.add(dwg.line(rDwnRgt,rDwnLft, stroke=svgwrite.rgb(10, 10, 16, '%')))
 
 # side lines inner
@@ -195,7 +232,9 @@ slope = slopeLine(lineStrToDouble((rDwnRgt,frtDwnRgt)))
 print("Slope right line: ",  slope)
 
 # drawCreateVericalLine((sideRearRgt,sideRearLft),dwg, foldDist, numFolds, (rDwnRgt,frtDwnRgt), (rDwnLft,frtDwnLft,), (sideFrtLft,sideRearLft), (sideFrtRgt,sideRearRgt))
-drawPleats((rDwnRgt, rDwnLft), dwg, foldDist, numFolds, (rDwnRgt,frtDwnRgt), (rDwnLft,frtDwnLft), slope)
+drawPleats((rDwnRgt, rDwnLft), dwg, foldDist, numFolds, (rDwnRgt,frtDwnRgt), (rDwnLft,frtDwnLft), slope, 1)
+# drawPleats((rDwnRgt, rDwnLft), dwg, foldDist, numFolds, (rDwnRgt,frtDwnRgt), (rDwnLft,frtDwnLft), -slope, -1)
+
 # print line_intersection((A, B), (C, D))
 
 dwg.save()
