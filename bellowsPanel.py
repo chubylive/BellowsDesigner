@@ -38,7 +38,7 @@ def pointToStr(point):
 	return (str(sx1) + "mm", str(sy1) + "mm")
 
 def pointAngleLine(point,angle,length_mm):
-	print("draw Slope: ", angle * 180/math.pi)
+	# print("draw Slope: ", angle * 180/math.pi)
 	(x1,y1) = point
 	return(point,(x1 + length_mm * math.cos(angle), y1 + length_mm * math.sin(angle)))
 
@@ -117,7 +117,7 @@ def drawPleats(startLine, dwgIn, foldDistIn, numFoldsIn, rightLineInner, leftLin
 	leftPoint = {}
 	rightPoint = {}
 	isUpPleat = False
-	for x in range((2*numFoldsIn) -3):
+	for x in range((2*numFoldsIn) +1):
 		intrLine = ((sx, sy - (foldDistIn*0.5)) ,(ex ,ey - (foldDistIn*0.5)))
 		((sx1,sy1),(ex1,ey1))  =  intrLine
 		strIntrLine = ((str(sx1) + "mm", str(sy1) + "mm"),(str(ex1) + "mm", str(ey1) + "mm") )
@@ -164,21 +164,27 @@ def drawPleats(startLine, dwgIn, foldDistIn, numFoldsIn, rightLineInner, leftLin
 		((sx,sy),(ex,ey)) = intrLine
 		(left_x),(left_y) = (lftPoint[0],lftPoint[1])
 		(right_x),(right_y) = (rgtPoint[0],rgtPoint[1])
-		print(leftPleatLine)
+		# print(leftPleatLine)
 		leftPrevIntrLine = leftPleatLine
 		leftPrevIntrLineOther = leftPleatLineOther
 		rightPrevIntrLine = rightPleatLine
 		rightPrevIntrLineOther = rightPleatLineOther
 
+cameraFocalDist = 120	#mm this defines the length of the side without flexfactor
+frontStdSize =	53 - 19.1 #mm 53 37  # 53 + 15.8
+rearStdSize =  70.5 - 17.70  #114 	 # 114 + 20.7mm
+foldDist = 18.5 			#mm
+flexFactor = 2
+flexPanelSideLength = cameraFocalDist *flexFactor
+cSqr = flexPanelSideLength * flexPanelSideLength
+aSqr = (rearStdSize/2 - frontStdSize/2) * (rearStdSize/2 - frontStdSize/2)
+panelLength = math.sqrt(cSqr - aSqr)
+numFolds = math.ceil((panelLength )/foldDist)
 
-cameraFocalDist = 120	#mm
-frontStdSize = 56		#mm
-rearStdSize = 114     #114 	70.5	#mm
-foldDist = 14.6			#mm
-flexFactor = 1.56
-numFolds = math.ceil((cameraFocalDist * flexFactor)/foldDist)
-bellowsLength = numFolds*foldDist
-dash = 5
+# bellowsLength = 
+
+bellowsLength = (panelLength )
+dash = 6
 # print("calulated number of folds: ", numFolds)
 print("Bellows Paramerters: Front Standard: ", frontStdSize, " Read Standard: ", 
 	rearStdSize, " Number of Folds: " , numFolds, " Bellows Length: ", bellowsLength)
@@ -205,10 +211,10 @@ frtDwnLft = (str((canvasWidth/2) - frontStdSize/2) + 'mm', str((canvasHeight/2) 
 frtDwnRgt = (str((canvasWidth/2) + frontStdSize/2) + 'mm', str((canvasHeight/2) - (bellowsLength/2) + foldDist) + 'mm')
 
 #top flap
-dwg.add(dwg.line(frontStrRgt,frontStrLft, stroke=svgwrite.rgb(10, 10, 16, '%'))).dasharray([dash,dash])
-dwg.add(dwg.line(frontStrRgt,frtDwnRgt, stroke=svgwrite.rgb(10, 10, 16, '%'))).dasharray([dash,dash])
-dwg.add(dwg.line(frontStrLft,frtDwnLft, stroke=svgwrite.rgb(10, 10, 16, '%'))).dasharray([dash,dash])
-dwg.add(dwg.line(frtDwnRgt,frtDwnLft, stroke=svgwrite.rgb(10, 10, 16, '%')))
+# dwg.add(dwg.line(frontStrRgt,frontStrLft, stroke=svgwrite.rgb(10, 10, 16, '%'))).dasharray([dash,dash])
+# dwg.add(dwg.line(frontStrRgt,frtDwnRgt, stroke=svgwrite.rgb(10, 10, 16, '%'))).dasharray([dash,dash])
+# dwg.add(dwg.line(frontStrLft,frtDwnLft, stroke=svgwrite.rgb(10, 10, 16, '%'))).dasharray([dash,dash])
+dwg.add(dwg.line(frontStrLft,frontStrRgt, stroke=svgwrite.rgb(10, 10, 16, '%')))
 
 #Read standard flap pre
 rearStrCtr = (str(canvasWidth/2) + 'mm', str((canvasHeight/2) + (bellowsLength/2)) + 'mm')
@@ -218,22 +224,22 @@ rDwnLft = (str((canvasWidth/2) - rearStdSize/2) + 'mm', str((canvasHeight/2) + (
 rDwnRgt = (str((canvasWidth/2) + rearStdSize/2) + 'mm', str((canvasHeight/2) + (bellowsLength/2) - foldDist) + 'mm')
 
 #bottom flap
-dwg.add(dwg.line(rearStrRgt,rearStrLft, stroke=svgwrite.rgb(10, 10, 16, '%'))).dasharray([dash,dash])
-dwg.add(dwg.line(rearStrRgt,rDwnRgt, stroke=svgwrite.rgb(10, 10, 16, '%'))).dasharray([dash,dash])
-dwg.add(dwg.line(rearStrLft,rDwnLft, stroke=svgwrite.rgb(10, 10, 16, '%'))).dasharray([dash,dash])
-dwg.add(dwg.line(rDwnRgt,rDwnLft, stroke=svgwrite.rgb(10, 10, 16, '%')))
+# dwg.add(dwg.line(rearStrRgt,rearStrLft, stroke=svgwrite.rgb(10, 10, 16, '%'))).dasharray([dash,dash])
+# dwg.add(dwg.line(rearStrRgt,rDwnRgt, stroke=svgwrite.rgb(10, 10, 16, '%'))).dasharray([dash,dash])
+# dwg.add(dwg.line(rearStrLft,rDwnLft, stroke=svgwrite.rgb(10, 10, 16, '%'))).dasharray([dash,dash])
+dwg.add(dwg.line(rearStrLft,rearStrRgt, stroke=svgwrite.rgb(10, 10, 16, '%')))
 
 # side lines inner
-dwg.add(dwg.line(rDwnRgt,frtDwnRgt, stroke=svgwrite.rgb(10, 10, 16, '%')))
-dwg.add(dwg.line(rDwnLft,frtDwnLft, stroke=svgwrite.rgb(10, 10, 16, '%')))
+dwg.add(dwg.line(frontStrRgt,rearStrRgt, stroke=svgwrite.rgb(10, 10, 16, '%')))
+dwg.add(dwg.line(frontStrLft,rearStrLft, stroke=svgwrite.rgb(10, 10, 16, '%')))
  
 
-slope = slopeLine(lineStrToDouble((rDwnRgt,frtDwnRgt)))
-print("Slope right line: ",  slope)
+slope = slopeLine(lineStrToDouble((rearStrRgt,frontStrRgt)))
+print("Slope right line deg: ", -90 + (slope * 180/math.pi))
 
 # drawCreateVericalLine((sideRearRgt,sideRearLft),dwg, foldDist, numFolds, (rDwnRgt,frtDwnRgt), (rDwnLft,frtDwnLft,), (sideFrtLft,sideRearLft), (sideFrtRgt,sideRearRgt))
-drawPleats((rDwnRgt, rDwnLft), dwg, foldDist, numFolds, (rDwnRgt,frtDwnRgt), (rDwnLft,frtDwnLft), slope, 1)
-# drawPleats((rDwnRgt, rDwnLft), dwg, foldDist, numFolds, (rDwnRgt,frtDwnRgt), (rDwnLft,frtDwnLft), -slope, -1)
+# drawPleats((rearStrRgt, rearStrLft), dwg, bellowsLength/numFolds, numFolds, (rearStrRgt,frontStrRgt), (rearStrLft,frontStrLft), slope, 1)
+drawPleats((rearStrRgt, rearStrLft), dwg, bellowsLength/numFolds, numFolds, (rearStrRgt,frontStrRgt), (rearStrLft,frontStrLft), -slope, -1)
 
 # print line_intersection((A, B), (C, D))
 
